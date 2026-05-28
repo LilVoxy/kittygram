@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kittygram</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f4f8;
+      color: #333;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #ff6b6b;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    header h1 { font-size: 1.6rem; }
+    header span { font-size: 0.9rem; opacity: 0.9; }
+
+    #logout-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.5);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: background 0.2s;
+    }
+    #logout-btn:hover { background: rgba(255,255,255,0.35); }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 32px 16px; }
+
+    /* LOGIN */
+    #login-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 80vh;
+    }
+
+    .login-card {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      width: 360px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    .login-card .emoji { font-size: 3rem; margin-bottom: 12px; }
+    .login-card h2 { font-size: 1.5rem; margin-bottom: 24px; color: #ff6b6b; }
+
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label { display: block; font-size: 0.85rem; color: #666; margin-bottom: 6px; }
+    .form-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus { outline: none; border-color: #ff6b6b; }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+    .btn-primary:hover { background: #e05555; }
+
+    #login-error {
+      color: #e05555;
+      font-size: 0.85rem;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+
+    /* CATS */
+    #app-section { display: none; }
+
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: #444;
+    }
+
+    .add-cat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+
+    .add-cat-card .form-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .add-cat-card .form-row .form-group { flex: 1; min-width: 120px; }
+
+    .cats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .cat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+      text-align: center;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .cat-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+
+    .cat-card .cat-emoji { font-size: 2.5rem; margin-bottom: 10px; }
+    .cat-card .cat-name { font-size: 1.1rem; font-weight: 600; }
+    .cat-card .cat-meta { font-size: 0.82rem; color: #888; margin-top: 6px; }
+
+    .color-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      margin-top: 8px;
+      font-weight: 500;
+    }
+
+    .color-Gray    { background: #eee;     color: #555; }
+    .color-Black   { background: #333;     color: #fff; }
+    .color-White   { background: #f9f9f9;  color: #333; border: 1px solid #ddd; }
+    .color-Ginger  { background: #ffe0b2;  color: #e65100; }
+    .color-Mixed   { background: linear-gradient(90deg,#eee,#ffe0b2); color: #555; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #aaa;
+    }
+    .empty-state .emoji { font-size: 3rem; margin-bottom: 12px; }
+
+    .loading { text-align: center; padding: 40px; color: #aaa; font-size: 1.1rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🐱 Kittygram</h1>
+  <div id="header-right" style="display:none">
+    <span id="username-label"></span>
+    <button id="logout-btn" onclick="logout()" style="margin-left:12px">Выйти</button>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<div id="login-section">
+  <div class="login-card">
+    <div class="emoji">🐾</div>
+    <h2>Вход</h2>
+    <div class="form-group">
+      <label>Логин</label>
+      <input type="text" id="username" placeholder="Введите логин" />
+    </div>
+    <div class="form-group">
+      <label>Пароль</label>
+      <input type="password" id="password" placeholder="Введите пароль"
+             onkeydown="if(event.key==='Enter') login()" />
+    </div>
+    <button class="btn-primary" onclick="login()">Войти</button>
+    <div id="login-error"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-section">
+  <div class="container">
+    <div class="add-cat-card">
+      <div class="section-title">Добавить котика</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Имя</label>
+          <input type="text" id="new-name" placeholder="Мурзик" />
+        </div>
+        <div class="form-group">
+          <label>Цвет</label>
+          <select id="new-color" style="width:100%;padding:10px 14px;border:1px solid #ddd;border-radius:8px;font-size:1rem">
+            <option value="Gray">Серый</option>
+            <option value="Black">Чёрный</option>
+            <option value="White">Белый</option>
+            <option value="Ginger">Рыжий</option>
+            <option value="Mixed">Смешанный</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Год рождения</label>
+          <input type="number" id="new-year" placeholder="2020" min="1985" max="2026" />
+        </div>
+        <div class="form-group" style="display:flex;align-items:flex-end">
+          <button class="btn-primary" onclick="addCat()" style="margin-top:0">Добавить</button>
+        </div>
+      </div>
+      <div id="add-error" style="color:#e05555;font-size:0.85rem;margin-top:10px"></div>
+    </div>
+
+    <div class="section-title">Мои котики</div>
+    <div id="cats-container"><div class="loading">Загрузка...</div></div>
+  </div>
+</div>
+
+<script>
+  const API = '/api';
+  let token = localStorage.getItem('kg_token');
+
+  const COLOR_EMOJI = { Gray:'🩶', Black:'🖤', White:'🤍', Ginger:'🧡', Mixed:'💜' };
+
+  if (token) showApp();
+
+  async function login() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    document.getElementById('login-error').textContent = '';
+
+    try {
+      const r = await fetch(`${API}/jwt/create/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (!r.ok) throw new Error('Неверный логин или пароль');
+      const data = await r.json();
+      token = data.access;
+      localStorage.setItem('kg_token', token);
+      localStorage.setItem('kg_user', username);
+      showApp();
+    } catch (e) {
+      document.getElementById('login-error').textContent = e.message;
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('kg_token');
+    localStorage.removeItem('kg_user');
+    token = null;
+    document.getElementById('app-section').style.display = 'none';
+    document.getElementById('login-section').style.display = 'flex';
+    document.getElementById('header-right').style.display = 'none';
+  }
+
+  function showApp() {
+    document.getElementById('login-section').style.display = 'none';
+    document.getElementById('app-section').style.display = 'block';
+    document.getElementById('header-right').style.display = 'flex';
+    document.getElementById('header-right').style.alignItems = 'center';
+    const user = localStorage.getItem('kg_user') || '';
+    document.getElementById('username-label').textContent = user;
+    loadCats();
+  }
+
+  async function loadCats() {
+    try {
+      const r = await fetch(`${API}/cats/`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (r.status === 401) { logout(); return; }
+      const data = await r.json();
+      const cats = Array.isArray(data) ? data : (data.results || []);
+      renderCats(cats);
+    } catch (e) {
+      document.getElementById('cats-container').innerHTML =
+        '<div class="empty-state"><div class="emoji">⚠️</div>Ошибка загрузки</div>';
+    }
+  }
+
+  function renderCats(cats) {
+    const el = document.getElementById('cats-container');
+    if (!cats.length) {
+      el.innerHTML = '<div class="empty-state"><div class="emoji">🐾</div>Пока нет котиков. Добавьте первого!</div>';
+      return;
+    }
+    el.innerHTML = '<div class="cats-grid">' + cats.map(c => `
+      <div class="cat-card">
+        <div class="cat-emoji">${COLOR_EMOJI[c.color] || '🐱'}</div>
+        <div class="cat-name">${c.name}</div>
+        <div class="cat-meta">${new Date().getFullYear() - c.birth_year} лет</div>
+        <span class="color-badge color-${c.color}">${c.color}</span>
+      </div>
+    `).join('') + '</div>';
+  }
+
+  async function addCat() {
+    const name = document.getElementById('new-name').value.trim();
+    const color = document.getElementById('new-color').value;
+    const birth_year = parseInt(document.getElementById('new-year').value);
+    document.getElementById('add-error').textContent = '';
+
+    if (!name || !birth_year) {
+      document.getElementById('add-error').textContent = 'Заполните имя и год рождения';
+      return;
+    }
+
+    try {
+      const r = await fetch(`${API}/cats/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name, color, birth_year })
+      });
+      if (!r.ok) {
+        const err = await r.json();
+        throw new Error(JSON.stringify(err));
+      }
+      document.getElementById('new-name').value = '';
+      document.getElementById('new-year').value = '';
+      loadCats();
+    } catch (e) {
+      document.getElementById('add-error').textContent = 'Ошибка: ' + e.message;
+    }
+  }
+</script>
+
+</body>
+</html>
